@@ -33,7 +33,8 @@ with open(sys.argv[1], "r") as data:
         if event == "4":
             # create article
             if subject == NULL:
-                logging.warning("Attempted creation of article without subject ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
+                logging.warning("Skip creation of article without subject ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
+                continue
                 subject = DEFAULT
             os.makedirs(subject, exist_ok=True)
             article_path = "/".join((subject, article))
