@@ -11,10 +11,13 @@
 # with this software. If not, see
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
 
+import itertools
 import logging
 import os
 import os.path
 import sys
+
+import create_mfnf_git
 
 NULL = "NULL"
 DEFAULT = "default"
@@ -25,14 +28,27 @@ if not os.path.isdir(DIRECTORY):
 
 article_locations = {}
 
+def mfnf_log():
+    mfnf_sitemap = create_mfnf_git.parse_sitemap()
+    created_articles = set()
+    for rev in mfnf_sitemap.revisions():
+        if rev["title"] in created_articles:
+            event = "5"
+        else:
+            event = "4"
+            created_articles.add(rev["title"])
+        yield ("mfnf" + str(rev["title"]), rev["user"].replace(" ", ""), event, "mfnf/" + rev["target"].split('/')[0], rev["timestamp"].rstrip("Z").replace("T", " "))
+
 with open(sys.argv[1], "r") as data:
     os.chdir(DIRECTORY)
-    log_entries = sorted((log_entry[:-1].split(sep='\t') for log_entry in data), key=lambda le: (le[4], le[2]))
+    log_entries = (log_entry[:-1].split(sep='\t') for log_entry in data)
+    log_entries = ((article, username, event, "serlo/" + subject, date) for article, username, event, subject, date in log_entries)
+    log_entries = sorted(itertools.chain(log_entries, mfnf_log()), key=lambda le: (le[4], le[2]))
     for article, username, event, subject, date in log_entries:
         assert event == "4" or event == "5"
         if event == "4":
             # create article
-            if subject == NULL:
+            if subject == "serlo/" + NULL:
                 logging.warning("Skip creation of article without subject ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
                 continue
                 subject = DEFAULT
