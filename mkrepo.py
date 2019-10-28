@@ -65,7 +65,7 @@ def mfnf_log():
 with open(sys.argv[1], "r") as data:
     os.chdir(DIRECTORY)
     log_entries = (log_entry[:-1].split(sep='\t') for log_entry in data)
-    log_entries = ((article, username, event, "serlo/" + subject, date) for article, username, event, subject, date in log_entries)
+    #log_entries = ((article, username, event, "serlo/" + subject, date) for article, username, event, subject, date in log_entries)
     log_entries = sorted(itertools.chain(log_entries, mfnf_log()), key=lambda le: (le[4], le[2]))
     for article, username, event, subject, date in log_entries:
         if is_ip(username):
