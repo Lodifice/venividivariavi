@@ -54,31 +54,29 @@ if not os.path.isdir(DIRECTORY):
 article_locations = {}
 
 def mfnf_log():
-    mfnf_sitemap = create_mfnf_git.parse_sitemap()
-    created_articles = set()
-    for rev in mfnf_sitemap.revisions():
-        if rev["title"] in created_articles:
-            event = "5"
-        else:
-            event = "4"
-            created_articles.add(rev["title"])
-        #yield ("mfnf" + str(rev["title"]), rev["user"].replace(" ", ""), event, rev["target"].split('/')[0], rev["timestamp"].rstrip("Z").replace("T", " "))
-        yield ("mfnf" + str(rev["title"]), rev["user"].replace(" ", ""), event, "mfnf", rev["timestamp"].rstrip("Z").replace("T", " "))
+    for page in create_mfnf_git.mfnf_pages():
+        first = False
+
+        for i, rev in zip(itertools.count(), create_mfnf_git.revisions(page)):
+            event = "4" if i == 0 else "5"
+
+            #yield ("mfnf" + str(rev["title"]), rev["user"].replace(" ", ""), event, rev["target"].split('/')[0], rev["timestamp"].rstrip("Z").replace("T", " "))
+            yield ("mfnf" + page, rev["user"].replace(" ", ""), event, "mfnf", rev["timestamp"].rstrip("Z").replace("T", " "))
 
 created_articles = set()
 
 with open(sys.argv[1], "r") as data:
     os.chdir(DIRECTORY)
     log_entries = (log_entry[:-1].split(sep='\t') for log_entry in data)
+    log_entries = itertools.chain(log_entries, mfnf_log())
     #log_entries = ((article, username, event, "serlo/" + subject, date) for article, username, event, subject, date in log_entries)
-    log_entries = sorted(itertools.chain(log_entries, mfnf_log()), key=lambda le: (le[4], le[2]))
+    log_entries = ((article, username, event, subject, int(datetime.strptime(date, "%Y-%m-%d %H:%M:%S").timestamp())) for article, username, event, subject, date in log_entries)
+    log_entries = sorted(log_entries, key=lambda le: (le[4], le[2]))
     for article, username, event, subject, date in log_entries:
         assert event == "4" or event == "5"
 
         if subject != NULL:
             article_path = "{}/{}.txt".format(subject, article)
-
-            timestamp = str(int(datetime.strptime(date, "%Y-%m-%d %H:%M:%S").timestamp()))
 
             if is_ip(username):
                 username = uniq_name(username)
@@ -89,4 +87,4 @@ with open(sys.argv[1], "r") as data:
             else:
                 modifier = "M"
 
-            print("|".join([timestamp,username,modifier,article_path]))
+            print("|".join([str(date),username,modifier,article_path]))

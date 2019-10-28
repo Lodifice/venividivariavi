@@ -10,6 +10,7 @@
 # with this software. If not, see
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
 
+import itertools
 import os
 import requests
 import re
@@ -68,6 +69,17 @@ def revision_content(title, revid=None):
 
     return query(params, ["query", "pages",
         lambda x: next(iter(x.values())), "revisions", 0, "*"])
+
+def allpages(prefix):
+    for result in query({
+                "list": "allpages",
+                "apprefix": prefix,
+                "aplimit": "max"
+            }, ["query", "allpages"]):
+        yield result["title"]
+
+def mfnf_pages():
+    return itertools.chain(allpages("Mathe für Nicht-Freaks"), allpages("Serlo"))
 
 def revisions(title):
     result = query({
