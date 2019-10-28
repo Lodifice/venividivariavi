@@ -79,7 +79,7 @@ with open(sys.argv[1], "r") as data:
                 continue
                 subject = DEFAULT
             os.makedirs(subject, exist_ok=True)
-            article_path = "/".join((subject, article))
+            article_path = "/".join((subject, article)) + ".txt"
             if os.path.isfile(article_path):
                 logging.warning("Skipping newly created article that already exists ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
                 continue
@@ -95,7 +95,7 @@ with open(sys.argv[1], "r") as data:
             if article not in article_locations:
                 logging.warning("Skipping edit of non-existing article ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
                 continue
-            article_path = "/".join((article_locations[article], article))
+            article_path = "/".join((article_locations[article], article)) + ".txt"
             with open(article_path, "a") as article_file:
                 print(date, username, file=article_file)
             os.system("git add '{}'".format(article_path))
