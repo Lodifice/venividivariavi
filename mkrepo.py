@@ -61,7 +61,7 @@ def mfnf_log():
             event = "4" if i == 0 else "5"
 
             #yield ("mfnf" + str(rev["title"]), rev["user"].replace(" ", ""), event, rev["target"].split('/')[0], rev["timestamp"].rstrip("Z").replace("T", " "))
-            yield ("mfnf" + page, rev["user"].replace(" ", ""), event, "mfnf", rev["timestamp"].rstrip("Z").replace("T", " "))
+            yield ("mfnf" + page.replace("/", "-"), rev["user"], event, "mfnf", rev["timestamp"].rstrip("Z").replace("T", " "))
 
 created_articles = set()
 
