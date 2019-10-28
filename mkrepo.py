@@ -19,6 +19,8 @@ import sys
 
 import create_mfnf_git
 
+from datetime import datetime
+
 NULL = "NULL"
 DEFAULT = "default"
 DIRECTORY = "git"
@@ -62,41 +64,28 @@ def mfnf_log():
             created_articles.add(rev["title"])
         yield ("mfnf" + str(rev["title"]), rev["user"].replace(" ", ""), event, "mfnf/" + rev["target"].split('/')[0], rev["timestamp"].rstrip("Z").replace("T", " "))
 
+created_articles = set()
+
 with open(sys.argv[1], "r") as data:
     os.chdir(DIRECTORY)
     log_entries = (log_entry[:-1].split(sep='\t') for log_entry in data)
     #log_entries = ((article, username, event, "serlo/" + subject, date) for article, username, event, subject, date in log_entries)
     log_entries = sorted(itertools.chain(log_entries, mfnf_log()), key=lambda le: (le[4], le[2]))
     for article, username, event, subject, date in log_entries:
-        if is_ip(username):
-            username = uniq_name(username)
-
         assert event == "4" or event == "5"
-        if event == "4":
-            # create article
-            if subject == "serlo/" + NULL:
-                logging.warning("Skip creation of article without subject ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
-                continue
-                subject = DEFAULT
-            os.makedirs(subject, exist_ok=True)
-            article_path = "/".join((subject, article)) + ".txt"
-            if os.path.isfile(article_path):
-                logging.warning("Skipping newly created article that already exists ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
-                continue
-            with open(article_path, "w") as article_file:
-                print(date, username, file=article_file)
-            article_locations[article] = subject
-            os.system("git add '{}'".format(article_path))
-            os.system("GIT_COMMITTER_DATE='{}' git commit --allow-empty-message -m 'create {}' --author '{} <{}@serlo.org>' --date '{}'".format(date, article_path, username, username, date))
-        else:
-            # update article
-            if subject != NULL:
-                logging.warning("Edit of article has subject ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
-            if article not in article_locations:
-                logging.warning("Skipping edit of non-existing article ({}, {}, {}, {}, {})".format(article, username, event, subject, date))
-                continue
-            article_path = "/".join((article_locations[article], article)) + ".txt"
-            with open(article_path, "a") as article_file:
-                print(date, username, file=article_file)
-            os.system("git add '{}'".format(article_path))
-            os.system("GIT_COMMITTER_DATE='{}' git commit --allow-empty-message -m 'edit {}' --author '{} <{}@serlo.org>' --date '{}'".format(date, article_path, username, username, date))
+
+        if subject != NULL:
+            article_path = "{}/{}.txt".format(subject, article)
+
+            timestamp = str(int(datetime.strptime(date, "%Y-%m-%d %H:%M:%S").timestamp()))
+
+            if is_ip(username):
+                username = uniq_name(username)
+
+            if event == "4" and article_path not in created_articles:
+                modifier = "A"
+                created_articles.add(article_path)
+            else:
+                modifier = "M"
+
+            print("|".join([timestamp,username,modifier,article_path]))
