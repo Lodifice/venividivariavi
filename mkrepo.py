@@ -23,6 +23,29 @@ NULL = "NULL"
 DEFAULT = "default"
 DIRECTORY = "git"
 
+USER = {}
+NO = 1
+
+def uniq_name(address):
+    global USER
+    global NO
+
+    if address not in USER:
+        USER[address] = " " * NO
+        NO+=1
+
+    return USER[address]
+
+def is_ip(address):
+    import ipaddress
+
+    try:
+        ipaddress.ip_address(address)
+
+        return True
+    except ValueError:
+        return False
+
 if not os.path.isdir(DIRECTORY):
     os.system("git init '{}'".format(DIRECTORY))
 
@@ -45,6 +68,9 @@ with open(sys.argv[1], "r") as data:
     log_entries = ((article, username, event, "serlo/" + subject, date) for article, username, event, subject, date in log_entries)
     log_entries = sorted(itertools.chain(log_entries, mfnf_log()), key=lambda le: (le[4], le[2]))
     for article, username, event, subject, date in log_entries:
+        if is_ip(username):
+            username = uniq_name(username)
+
         assert event == "4" or event == "5"
         if event == "4":
             # create article
