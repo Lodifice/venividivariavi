@@ -87,4 +87,7 @@ with open(sys.argv[1], "r") as data:
             else:
                 modifier = "M"
 
-            print("|".join([str(date),username,modifier,article_path]))
+            params = [str(date),username,modifier,article_path]
+            params = [x.replace("|", "-") for x in params]
+
+            print("|".join(params))
