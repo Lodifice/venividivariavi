@@ -35,9 +35,12 @@ video.mp4: video.ppm audio.mp3
 		-c:v libx264 -preset veryslow -crf 22 -f mp4 -movflags +faststart \
 		-c:a libvo_aacenc -b:a 192k $@
 
-video.ppm: git gource.conf
+video.ppm: git gource.conf logo.png
 	gource --load-config gource.conf -r 30 -o video.ppm \
 		-1280x720 git
+
+final_logo.png: logo.svg
+	convert $< -resize x50 $@
 
 .PHONY: clean
 clean:
