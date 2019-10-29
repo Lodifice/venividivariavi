@@ -35,7 +35,7 @@ video.webm: video.ppm audio.mp3
 video.mp4: video.ppm audio.mp3
 	ffmpeg -y -r 30 -f image2pipe -vcodec ppm -i $< -i $(word 2, $^) \
 		-c:v libx264 -preset veryslow -crf 22 -f mp4 -movflags +faststart \
-		-c:a libvo_aacenc -b:a 192k $@
+		-c:a aac -b:a 192k $@
 
 git.log: mkrepo.py query_result create_mfnf_git.py
 	python3 mkrepo.py query_result > $@
@@ -44,7 +44,7 @@ video.ppm: git.log gource.conf logo.png
 	gource --load-config gource.conf -r 30 -o video.ppm \
 		-1280x720 git.log
 
-final_logo.png: logo.svg
+logo.png: logo.svg
 	convert $< -resize x50 $@
 
 .PHONY: clean
