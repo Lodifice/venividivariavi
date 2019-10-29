@@ -62,7 +62,6 @@ def mfnf_log():
 created_articles = set()
 
 with open(sys.argv[1], "r") as data:
-    os.chdir(DIRECTORY)
     log_entries = (log_entry[:-1].split(sep='\t') for log_entry in data)
     log_entries = itertools.chain(log_entries, mfnf_log())
     #log_entries = ((article, username, event, "serlo/" + subject, date) for article, username, event, subject, date in log_entries)
