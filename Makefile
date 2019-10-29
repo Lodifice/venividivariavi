@@ -11,20 +11,23 @@
 # with this software. If not, see
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-LENGTH := $(shell expr 3 \* 60 + 54)
+LENGTH := $(shell expr 3 \* 60 + 74)
+FPS := 30
+SIZE := 1280x720
 
 .PHONY: all
 all: video.mp4
 
-GOURCE := gource --load-config gource.conf -r 30 -o - -1280x720 git.log
+GOURCE := gource --load-config gource.conf -r $(FPS) -o - -$(SIZE) git.log
 
 video.mp4: audio.mp3 git.log logo.png
-	$(GOURCE) | ffmpeg -r 30 -f image2pipe -vcodec ppm -i - -i $< \
+	$(GOURCE) | ffmpeg -f lavfi -i nullsrc=s=$(SIZE):d=$(LENGTH):r=$(FPS) \
+		-r $(FPS) -f image2pipe -vcodec ppm -i - -i $< -filter_complex \
+		"[0:v][1:v]overlay[v1]; [v1]fade=out:st=$(shell expr $(LENGTH) - 2):d=2[v2]; [2:a]afade=out:st=$(shell expr $(LENGTH) - 7):d=7[a1]" \
+		-map "[v2]" -map "[a1]" \
 		-c:v libx264 -preset veryslow -tune animation -crf 14 -f mp4 \
-		-movflags +faststart -c:a aac -b:a 192k -r 30 \
-		-t $(LENGTH) -y \
-		-af 'afade=out:st=$(shell expr $(LENGTH) - 2):d=2' \
-		-vf 'fade=out:st=$(shell expr $(LENGTH) - 1):d=1' $@
+		-movflags +faststart -c:a aac -b:a 192k -r $(FPS) \
+		-t $(LENGTH) -y $@
 
 git.log: mkrepo.py query_result create_mfnf_git.py
 	python3 mkrepo.py query_result > $@
