@@ -23,7 +23,6 @@ from datetime import datetime
 
 NULL = "NULL"
 DEFAULT = "default"
-DIRECTORY = "git"
 
 USER = {}
 NO = 1
@@ -47,9 +46,6 @@ def is_ip(address):
         return True
     except ValueError:
         return False
-
-if not os.path.isdir(DIRECTORY):
-    os.system("git init '{}'".format(DIRECTORY))
 
 article_locations = {}
 
