@@ -21,9 +21,6 @@ FFMPEG_CUT_VIDEO := -t $(LENGTH) -y \
 	            -vf 'fade=out:st=$(shell expr $(LENGTH) - 1):d=1'
 GOURCE := gource --load-config gource.conf -r 30 -o - -1280x720 git.log
 
-final.mp4: video.mp4
-	ffmpeg -i video.mp4 $(FFMPEG_CUT_VIDEO) final.mp4
-
 final.webm: video.webm
 	ffmpeg -i video.webm $(FFMPEG_CUT_VIDEO) final.webm
 
@@ -39,8 +36,9 @@ video.webm: audio.mp3 git.log logo.png
 
 video.mp4: audio.mp3 git.log logo.png
 	$(GOURCE) | ffmpeg -r 30 -f image2pipe -vcodec ppm -i - -i $< \
-		-c:v libx264 -preset veryslow -tune animation -crf 16 -f mp4 \
-		-movflags +faststart -c:a aac -b:a 192k -y -r 30 $@
+		-c:v libx264 -preset veryslow -tune animation -crf 14 -f mp4 \
+		-movflags +faststart -c:a aac -b:a 192k -r 30 \
+		$(FFMPEG_VIDEO_CUT) $@
 
 git.log: mkrepo.py query_result create_mfnf_git.py
 	python3 mkrepo.py query_result > $@
