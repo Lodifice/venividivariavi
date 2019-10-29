@@ -14,7 +14,7 @@
 LENGTH := $(shell expr 3 \* 60 + 54)
 
 .PHONY: all
-all: final.mp4 final.webm
+all: video.mp4
 
 GOURCE := gource --load-config gource.conf -r 30 -o - -1280x720 git.log
 
