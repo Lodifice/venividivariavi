@@ -12,11 +12,12 @@
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 LENGTH := $(shell expr 3 \* 60 + 74)
+FRAME_TIME := $(shell expr 3 \* 60 + 55)
 FPS := 30
 SIZE := 1280x720
 
 .PHONY: all
-all: video.mp4
+all: video.mp4 last_frame.jpg
 
 GOURCE := gource --load-config gource.conf -r $(FPS) -o - -$(SIZE) git.log
 
@@ -34,6 +35,9 @@ git.log: mkrepo.py query_result create_mfnf_git.py
 
 logo.png: logo.svg
 	convert $< -resize x50 $@
+
+last_frame.jpg: video.mp4
+	ffmpeg -ss $(FRAME_TIME) -i $< -frames:v 1 -s $(SIZE) $@
 
 .PHONY: clean
 clean:
