@@ -11,43 +11,43 @@
 # with this software. If not, see
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-VIDEO_LENGTH := 233
+LENGTH := $(shell expr 3 \* 60 + 54)
 
 .PHONY: all
 all: final.mp4 final.webm
 
+FFMPEG_CUT_VIDEO := -t $(LENGTH) -y \
+	            -af 'afade=out:st=$(shell expr $(LENGTH) - 2):d=2' \
+	            -vf 'fade=out:st=$(shell expr $(LENGTH) - 1):d=1'
+GOURCE := gource --load-config gource.conf -r 30 -o - -1280x720 git.log
+
 final.mp4: video.mp4
-	ffmpeg -i video.mp4 -t $(VIDEO_LENGTH) final.mp4
+	ffmpeg -i video.mp4 $(FFMPEG_CUT_VIDEO) final.mp4
 
 final.webm: video.webm
-	ffmpeg -i video.webm -t $(VIDEO_LENGTH) final.webm
+	ffmpeg -i video.webm $(FFMPEG_CUT_VIDEO) final.webm
 
-video.webm: video.ppm audio.mp3
-	ffmpeg -y -r 30 -f image2pipe -vcodec ppm -i $< \
+video.webm: audio.mp3 git.log logo.png
+	$(GOURCE) | ffmpeg -f image2pipe -vcodec ppm -i - \
 		-codec:v libvpx -quality best -cpu-used 0 -b:v 1M \
 		-qmin 10 -qmax 42 -maxrate 2M -bufsize 2M -threads 4 \
-		-an -pass 1 -f webm /dev/null
-	ffmpeg -y -r 30 -f image2pipe -vcodec ppm -i $< -i $(word 2, $^) \
+		-an -pass 1 -f webm -y -r 30 /dev/null
+	$(GOURCE) | ffmpeg -f image2pipe -vcodec ppm -i - -i $< \
 		-codec:v libvpx -quality best -cpu-used 0 -b:v 1M -qmin 10 \
 		-qmax 42 -maxrate 2M -bufsize 2M -threads 4 \
-		-codec:a libvorbis -b:a 164k -pass 2 -f webm $@
+		-codec:a libvorbis -b:a 164k -pass 2 -y -r 30 -f webm $@
 
-video.mp4: video.ppm audio.mp3
-	ffmpeg -y -r 30 -f image2pipe -vcodec ppm -i $< -i $(word 2, $^) \
-		-c:v libx264 -preset veryslow -crf 22 -f mp4 -movflags +faststart \
-		-c:a aac -b:a 192k $@
+video.mp4: audio.mp3 git.log logo.png
+	$(GOURCE) | ffmpeg -r 30 -f image2pipe -vcodec ppm -i - -i $< \
+		-c:v libx264 -preset veryslow -tune animation -crf 16 -f mp4 \
+		-movflags +faststart -c:a aac -b:a 192k -y -r 30 $@
 
 git.log: mkrepo.py query_result create_mfnf_git.py
 	python3 mkrepo.py query_result > $@
-
-video.ppm: git.log gource.conf logo.png
-	gource --load-config gource.conf -r 30 -o video.ppm \
-		-1280x720 git.log
 
 logo.png: logo.svg
 	convert $< -resize x50 $@
 
 .PHONY: clean
 clean:
-	rm -rf git
 	git clean -f -X
